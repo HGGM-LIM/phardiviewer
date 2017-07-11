@@ -1,0 +1,65 @@
+cmake_minimum_required(VERSION 2.8)
+
+project(phardiviewer)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets 3DCore 3DExtras 3DRender 3DInput)
+
+FIND_PACKAGE(Armadillo REQUIRED)
+INCLUDE_DIRECTORIES(${ARMADILLO_INCLUDE_DIRS})
+
+FIND_PACKAGE(ITK REQUIRED)
+INCLUDE(${ITK_USE_FILE})
+
+# Build binary directory
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+
+INCLUDE(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+
+IF(COMPILER_SUPPORTS_CXX11)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+ELSEIF(COMPILER_SUPPORTS_CXX0X)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+ELSE()
+    MESSAGE(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a dIFferent C++ compiler.")
+ENDIF()
+
+
+FIND_PACKAGE(OpenMP)
+IF (OPENMP_FOUND)
+    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+ENDIF()
+
+FIND_PACKAGE(BLAS REQUIRED)
+FIND_PACKAGE(LAPACK REQUIRED)
+
+INCLUDE_DIRECTORIES( "${CMAKE_SOURCE_DIR}/src" )
+
+file(GLOB SOURCES
+    "*.cpp"
+    "src/*.cpp"
+    "resources/*.qrc"
+)
+
+add_executable(${PROJECT_NAME} ${SOURCES})
+
+# link the qt3d libraries
+target_link_libraries(${PROJECT_NAME}
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Widgets
+    Qt5::3DCore
+    Qt5::3DExtras
+    Qt5::3DRender
+    Qt5::3DInput
+    ${EXTRA_LIBS}
+    ${ITK_LIBRARIES}
+    ${BLAS_LIBRARIES}
+    ${LAPACK_LIBRARIES}
+    ${ARMADILLO_LIBRARIES}
+    )
